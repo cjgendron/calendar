@@ -34,23 +34,14 @@ var layOutDay = function(events) {
   }
 
   events.forEach(function(element, index, array) {
-    // console.log(index, element);
     for(var time = element.start; time <= element.end; time++) {
       timeSlots[time].push(index);
-      // if (timeSlots[time]) {
-      //   timeSlots[time].push(index);
-      // } else {
-      //   timeSlots[time] = [index]
-      // }
     }
   })
 
   var timeSlotsStringified = timeSlots.map(function(arr) { return JSON.stringify(arr); });
   var filteredTimeSlots = _.uniq(timeSlotsStringified);
   timeSlots = filteredTimeSlots.map(function(str) { return JSON.parse(str); });
-  if(timeSlots[0].length === 0) {
-    timeSlots.splice(0, 1);
-  }
 
   while(timeSlots.length) {
     // find the largest set of conflicting events
@@ -63,14 +54,15 @@ var layOutDay = function(events) {
       var index = conflictSet[i];
       var width = events[index]['width'];
       var cols = _.range(width);
-      // console.log(cols);
       if(width) {
         cols = _.without(cols, events[index]['col']);
         setWidths = true;
         for(j in conflictSet) {
           var index = conflictSet[j];
-          events[index]['width'] = width;
-          events[index]['col'] = cols.pop();
+          if(!events[index]['width']) {
+            events[index]['width'] = width;
+            events[index]['col'] = cols.splice(0,1)[0];
+          }
         }
         break;
       }
@@ -79,11 +71,10 @@ var layOutDay = function(events) {
       for (i in conflictSet) {
         var index = conflictSet[i];
         events[index]['width'] = conflictSet.length;
-        events[index]['col'] = i;
+        events[index]['col'] = Number(i);
       }
     }
     timeSlots.splice(maxLengthIndex, 1);
-    // console.log(JSON.stringify(events));
   } 
 
   HTMLify(events);

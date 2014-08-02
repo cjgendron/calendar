@@ -4,6 +4,7 @@ div {
   -webkit-box-sizing:border-box;
   font-family: verdana;
   line-height: 10px;
+  overflow: auto;
 }
 
 #container {
