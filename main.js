@@ -43,35 +43,39 @@ var layOutDay = function(events) {
     }
   })
 
-  // find the largest set of conflicting events
-  var timeSlotsFilterable = timeSlots.map(function(arr) { return JSON.stringify(arr); });
-  var filteredTimeSlots = _.uniq(timeSlotsFilterable);
-  console.log(filteredTimeSlots);
-  timeSlots = filteredTimeSlots.map(function(str) { return JSON.parse(str); })
-  console.log(timeSlots);
-  var lengths = timeSlots.map(function(arr) { return arr.length; });
-  var maxLengthIndex = lengths.indexOf(Math.max.apply(Math, lengths));
-  var conflictSet = timeSlots[maxLengthIndex];
-  console.log(conflictSet)
-  var setWidths = false;
-  // TODO: clean this up!
-  for (i in conflictSet) {
-    var index = conflictSet[i];
-    var width = events[index]['width'];
-    if(width) {
-      alert("oops");
-      setWidths = true;
-      for(j in conflictSet) {
-        events[j]['width'] = width;
-      }
-    }
-  }
-  if(!setWidths) {
-    for (i in conflictSet) {
-      var index = conflictSet[i];
-      events[index]['width'] = 600/conflictSet.length;
-    }
+  var timeSlotsStringified = timeSlots.map(function(arr) { return JSON.stringify(arr); });
+  var filteredTimeSlots = _.uniq(timeSlotsStringified);
+  timeSlots = filteredTimeSlots.map(function(str) { return JSON.parse(str); });
+  if(timeSlots[0].length === 0) {
+    timeSlots.splice(0, 1);
   }
 
+  while(timeSlots.length) {
+    // find the largest set of conflicting events
+    var lengths = timeSlots.map(function(arr) { return arr.length; });
+    var maxLengthIndex = lengths.indexOf(Math.max.apply(Math, lengths));
+    var conflictSet = timeSlots[maxLengthIndex];
+    var setWidths = false;
+    // TODO: clean this up!
+    for (i in conflictSet) {
+      var index = conflictSet[i];
+      var width = events[index]['width'];
+      if(width) {
+        setWidths = true;
+        for(j in conflictSet) {
+          var index = conflictSet[j]
+          events[index]['width'] = width;
+        }
+      }
+    }
+    if(!setWidths) {
+      for (i in conflictSet) {
+        var index = conflictSet[i];
+        events[index]['width'] = 600/conflictSet.length;
+      }
+    }
+    timeSlots.splice(maxLengthIndex, 1);
+    console.log(JSON.stringify(events));
+  } 
 
 }
