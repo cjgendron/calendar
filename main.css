@@ -9,6 +9,8 @@
 
 table {
   border-spacing: 0;
+  -webkit-border-horizontal-spacing: 0;
+  -webkit-border-vertical-spacing: 0;
 }
 
 td.time {
@@ -28,4 +30,21 @@ tr:nth-child(even) .time, span {
 
 tr:nth-child(even) .time > span {
   display: none;
+}
+
+.event {
+  background-color: white;
+  border: 1px solid #cfcfcf;
+  border-left: 4px solid #42639e;
+  display: inline;
+  /*height: 200px;*/
+  float: left;
+  position: relative;
+  width: 50%;
+  /*flex-grow: 1;*/
+}
+
+.flex {
+  display: flex;
+  border: 1px solid black;
 }
