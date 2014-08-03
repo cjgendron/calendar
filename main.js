@@ -18,119 +18,7 @@ $(function() {
   }
 })
 
-  // ALGORITHM OVERVIEW:
-  // 1) find all sets of events which conflict with each other
-  // 2) start with the largest set of 
-
-var layOutDay = function(events) {
-
-  $('#container').empty();
-
-
-  // sort all events by start time
-  events.sort(function(evt1, evt2) {
-    return evt1.start - evt2.start;
-  })
-  console.log(JSON.stringify(events));
-  for(var i = 0; i < events.length; i++) {
-    events[i]['conflicts'] = [];
-  }
-
-  // 
-  var timeSlots = [];
-  for(var i = 0; i <= 720; i++) {
-    timeSlots.push([]);
-  }
-  events.forEach(function(element, index, array) {
-    for(var time = element.start; time <= element.end; time++) {
-      timeSlots[time].push(index);
-    }
-  })
-
-
-  var timeSlotsStringified = timeSlots.map(function(arr) { return JSON.stringify(arr); });
-  var filteredTimeSlots = _.uniq(timeSlotsStringified);
-  timeSlots = filteredTimeSlots.map(function(str) { return JSON.parse(str); });
-
-  for(var i = 0; i < timeSlots.length; i++) {
-    var set = timeSlots[i];
-    for(var j = 0; j < set.length; j++) {
-      var index = set[j];
-      var conflicts = events[index]['conflicts'];
-      conflicts.push.apply(conflicts, set);
-      events[index]['conflicts'] = _.without(_.uniq(conflicts), index);
-    }
-  }
-
-  timeSlots.sort(function(arr1, arr2) {
-    return arr2.length - arr1.length;
-  });
-
-  while(timeSlots.length) {
-    // find the largest set of conflicting events
-    var lengths = timeSlots.map(function(arr) { return arr.length; });
-    var maxLengthIndex = lengths.indexOf(Math.max.apply(Math, lengths));
-    var conflictSet = timeSlots[maxLengthIndex];
-    var setWidths = false;
-    // TODO: clean this up!
-    for (var i = 0; i < conflictSet.length; i++) {
-      var index = conflictSet[i];
-      var evt = events[index];
-      var width = events[index]['width'];
-      // console.log("width: " + width);
-      var cols = _.range(width);
-    }
-    if(!width) {
-      for (var i = 0; i < conflictSet.length; i++) {
-        var index = conflictSet[i];
-        events[index]['width'] = conflictSet.length;
-        events[index]['col'] = i;
-        console.log("Setting event " + index + " to column " + events[index]['col'] + " in i loop.");
-      }
-    }
-    timeSlots.splice(maxLengthIndex, 1);
-
-    var k = 0;
-    var parents = conflictSet.slice(0, conflictSet.length);
-
-    while(k < timeSlots.length) {
-      var set = timeSlots[k];
-      var intersection = _.intersection(set, parents);
-      if(intersection.length) {
-        var width = events[parents[0]]['width'];
-        var initialCols = _.range(width);
-        for(var i = 0; i < set.length; i++) {
-          var index = set[i];
-          var conflicts = events[index]['conflicts'];
-          var parentsEvents = conflicts.map(function(i) { return events[i]; } );
-          var occupiedCols = _.pluck(parentsEvents, 'col');
-          occupiedCols = _.filter(occupiedCols, function(i) {
-            if(i === 0) {
-              return true;
-            }
-            return Boolean(i);
-          })
-          cols = _.difference(initialCols, occupiedCols);
-          if(!events[index]['width']) {
-            events[index]['width'] = width;
-            events[index]['col'] = cols.shift();
-            parents.push(index);
-            k = 0;
-            console.log("Setting event " + index + " to column " + events[index]['col'] + " in k loop.");
-          }
-        }
-        // timeSlots.splice(k, 1);
-      }
-      k++;
-    }
-
-  } 
-
-  HTMLify(events);
-
-}
-
-
+// takes a list of events, and displays them in the calendar
 var HTMLify = function(events) {
   for(var i = 0; i < events.length; i++) {
     var evt = events[i];
@@ -142,11 +30,117 @@ var HTMLify = function(events) {
         'width': (600/evt['width']).toString() + 'px',
         'height': (evt['end'] - evt['start']).toString() + 'px',
       },
-      'html': i
-      // 'html': '<span class="item">Sample Item</span><br><span class="loc">Sample Location</span>'
+      'html': '<span class="item">Sample Item</span><br><span class="loc">Sample Location</span>'
     }).appendTo('#container');
   }
-  console.log("meh")
+}
+
+  // ALGORITHM OVERVIEW:
+  // 1) find all sets of events which conflict with each other, by filling each time slot with the events that occupy it
+  // 2) keep track of the all events which conflict with each individual event
+  // 3) identify the largest set of conflicts, and set all their widths
+  // 4) look through the other sets of conflicts, and set any event which conflicts with the events in the largest set to that same width (constraint #2)
+  // 5) use the list of conflicts to ensure every event is in its own column (constraint #1)
+  // 6) after looking through all events, back to #2
+
+var layOutDay = function(events) {
+
+  $('#container').empty();
+
+  var timeSlots = [];
+  for(var i = 0; i <= 720; i++) {
+    timeSlots.push([]);
+  }
+
+  events.forEach(function(element, index, array) {
+    element['conflicts'] = [];
+    for(var time = element.start; time <= element.end; time++) {
+      timeSlots[time].push(index);
+    }
+  })
+
+  var timeSlotsStringified = timeSlots.map(function(arr) { return JSON.stringify(arr); });
+  var filteredTimeSlots = _.uniq(timeSlotsStringified);
+  timeSlots = filteredTimeSlots.map(function(str) { return JSON.parse(str); });
+  timeSlots = _.filter(timeSlots, function(arr) { return arr.length; });
+
+  for(var i = 0; i < timeSlots.length; i++) {
+    var set = timeSlots[i];
+    for(var j = 0; j < set.length; j++) {
+      var index = set[j];
+      var conflicts = events[index]['conflicts'];
+      conflicts.push.apply(conflicts, set);
+      events[index]['conflicts'] = _.without(_.uniq(conflicts), index);
+    }
+  }
+
+  while(timeSlots.length) {
+
+    // find the largest set of conflicting events
+    var lengths = timeSlots.map(function(arr) { return arr.length; });
+    var maxLengthIndex = lengths.indexOf(Math.max.apply(Math, lengths));
+    var conflictSet = timeSlots[maxLengthIndex];
+
+    var index = conflictSet[conflictSet.length - 1];
+    var width = events[index]['width'];
+
+    // set all their widths, if they haven't been set yet
+    if(!width) {
+      for (var i = 0; i < conflictSet.length; i++) {
+        var index = conflictSet[i];
+        events[index]['width'] = conflictSet.length;
+        events[index]['col'] = i;
+      }
+    }
+
+    // once it's been processed, eliminate it from the list
+    timeSlots.splice(maxLengthIndex, 1);
+
+    var k = 0;
+
+    // parents is the list all of the events which 
+    var parents = conflictSet.slice(0, conflictSet.length);
+
+    while(k < timeSlots.length) {
+      var set = timeSlots[k];
+      var intersection = _.intersection(set, parents);
+
+      if(intersection.length) {
+        var width = events[conflictSet[0]]['width'];
+        var initialCols = _.range(width);
+
+        for(var i = 0; i < set.length; i++) {
+          var index = set[i];
+          var conflicts = events[index]['conflicts'];
+          var parentsEvents = conflicts.map(function(i) { return events[i]; } );
+          var occupiedCols = _.pluck(parentsEvents, 'col');
+
+          occupiedCols = _.filter(occupiedCols, function(i) {
+            if(i === 0) {
+              return true;
+            }
+            return Boolean(i);
+          })
+
+          cols = _.difference(initialCols, occupiedCols);
+
+          if(!events[index]['width']) {
+            events[index]['width'] = width;
+            events[index]['col'] = cols.shift();
+            parents.push(index);
+            k = 0;
+          }
+
+        }
+
+      }
+      k++;
+    }
+
+  } 
+
+  HTMLify(events);
+
 }
 
 function getRandomInt(min, max) {
