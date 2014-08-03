@@ -98,36 +98,42 @@ var layOutDay = function(events) {
 
     var k = 0;
 
-    // parents is the list all of the events which 
-    var parents = conflictSet.slice(0, conflictSet.length);
+    // tree is a list of all events which are conflicting with an event in this conflictSet, either directly or indirectly through other events
+    var tree = conflictSet.slice(0, conflictSet.length);
 
     while(k < timeSlots.length) {
       var set = timeSlots[k];
-      var intersection = _.intersection(set, parents);
+      var intersection = _.intersection(set, tree);
 
       if(intersection.length) {
-        var width = events[conflictSet[0]]['width'];
-        var initialCols = _.range(width);
+        var width = events[tree[0]]['width'];
+        var cols = _.range(width);
 
         for(var i = 0; i < set.length; i++) {
           var index = set[i];
-          var conflicts = events[index]['conflicts'];
-          var parentsEvents = conflicts.map(function(i) { return events[i]; } );
-          var occupiedCols = _.pluck(parentsEvents, 'col');
-
-          occupiedCols = _.filter(occupiedCols, function(i) {
-            if(i === 0) {
-              return true;
-            }
-            return Boolean(i);
-          })
-
-          cols = _.difference(initialCols, occupiedCols);
 
           if(!events[index]['width']) {
+            var conflicts = events[index]['conflicts'];
+            var parentsEvents = conflicts.map(function(i) { return events[i]; } );
+            var occupiedCols = _.pluck(parentsEvents, 'col');
+
+            occupiedCols = _.filter(occupiedCols, function(i) {
+              if(i === 0) {
+                return true;
+              }
+              return Boolean(i);
+            })
+
+            // make sure we assign this event a column that isn't already occupied by any of its conflicts
+            unoccupiedCols = _.difference(cols, occupiedCols);
+
             events[index]['width'] = width;
-            events[index]['col'] = cols.shift();
-            parents.push(index);
+            events[index]['col'] = unoccupiedCols.shift();
+
+            // this event conflicts with other events in the tree, so add it
+            tree.push(index);
+
+            // since the tree has expanded, we need to go through all of the sets again
             k = 0;
           }
 
