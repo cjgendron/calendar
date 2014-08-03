@@ -98,19 +98,22 @@ var layOutDay = function(events) {
       var intersection = _.intersection(set, parents);
       if(intersection.length) {
         var width = events[parents[0]]['width'];
-        var cols = _.range(width);
-        var parentsEvents = set.map(function(i) { return events[i]; } );
-        var occupiedCols = _.pluck(parentsEvents, 'col');
-        cols = _.difference(cols, occupiedCols);
+        var initialCols = _.range(width);
         for(var i = 0; i < set.length; i++) {
           var index = set[i];
           var conflicts = events[index]['conflicts'];
-          if(index == 7 || index == 6) {
-            console.log("STAP");
-          }
+          var parentsEvents = conflicts.map(function(i) { return events[i]; } );
+          var occupiedCols = _.pluck(parentsEvents, 'col');
+          occupiedCols = _.filter(occupiedCols, function(i) {
+            if(i === 0) {
+              return true;
+            }
+            return Boolean(i);
+          })
+          cols = _.difference(initialCols, occupiedCols);
           if(!events[index]['width']) {
             events[index]['width'] = width;
-            events[index]['col'] = cols.pop();
+            events[index]['col'] = cols.shift();
             parents.push(index);
             k = 0;
             console.log("Setting event " + index + " to column " + events[index]['col'] + " in k loop.");
