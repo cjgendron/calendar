@@ -7,8 +7,6 @@ div {
   box-sizing:border-box;
   -moz-box-sizing:border-box;
   -webkit-box-sizing:border-box;
-  line-height: 10px;
-  overflow: auto;
 }
 
 #container {
@@ -51,11 +49,12 @@ tr:nth-child(even) .time > span {
 }
 
 .event {
+  line-height: 10px;
   background-color: white;
   border: 1px solid #cfcfcf;
   border-left: 0;
-  position: relative;
-  padding: 3px;
+  position: absolute; /*this must be absolute, breaks otherwise*/
+  padding-left: 6px;
 }
 
 .event:before{
@@ -63,12 +62,15 @@ tr:nth-child(even) .time > span {
   border: 4px solid #4d6fa7;
   border-right-width: 0;
   content: '';
-  height: 100%;
+  /*height: 100%;*/
   top: -1px;
   bottom: -1px;
   left: 0;
   position: absolute;
-  /*height: inherit;*/
+}
+
+.event > .span {
+  margin-left: 5px;
 }
 
 span.item {
