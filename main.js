@@ -76,6 +76,7 @@ var layOutDay = function(events) {
           if(!events[index]['width']) {
             events[index]['width'] = width;
             events[index]['col'] = cols.splice(0,1)[0];
+            console.log("Setting event " + index + " to column " + events[index]['col'] + " in j loop.");
           }
         }
         break;
@@ -85,10 +86,38 @@ var layOutDay = function(events) {
       for (var i = 0; i < conflictSet.length; i++) {
         var index = conflictSet[i];
         events[index]['width'] = conflictSet.length;
-        events[index]['col'] = Number(i);
+        events[index]['col'] = i;
+        console.log("Setting event " + index + " to column " + events[index]['col'] + " in i loop.");
       }
     }
     timeSlots.splice(maxLengthIndex, 1);
+
+    var k = 0;
+    var parents = conflictSet.slice(0, conflictSet.length);
+
+    while(k < timeSlots.length) {
+      var set = timeSlots[k];
+      var intersection = _.intersection(set, parents);
+      if(intersection.length) {
+        for(var i = 0; i < set.length; i++) {
+          var index = set[i];
+          var width = events[parents[0]]['width'];
+          var cols = _.range(width);
+          var occupiedCols = _.pluck(set.map(function(i) { return events[i]; } ), 'col');
+          cols = _.difference(cols, occupiedCols);
+          if(!events[index]['width']) {
+            events[index]['width'] = width;
+            events[index]['col'] = cols.splice(0,1)[0];
+            parents.push(index);
+            k = 0;
+            console.log("Setting event " + index + " to column " + events[index]['col'] + " in k loop.");
+          }
+        }
+        // timeSlots.splice(k, 1);
+      }
+      k++;
+    }
+
   } 
 
   HTMLify(events);
@@ -120,7 +149,7 @@ var generate = function(quantity) {
   var events = [];
   for(var i = 0; i < quantity; i++) {
     var start = getRandomInt(0, 700);
-    var end = getRandomInt(start+10, Math.min(start+100, 720));
+    var end = getRandomInt(start+20, Math.min(start+100, 720));
     events.push({start: start, end: end});
   }
 
