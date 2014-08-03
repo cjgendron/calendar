@@ -31,6 +31,10 @@ var layOutDay = function(events) {
   events.sort(function(evt1, evt2) {
     return evt1.start - evt2.start;
   })
+  console.log(JSON.stringify(events));
+  for(var i = 0; i < events.length; i++) {
+    events[i]['conflicts'] = [];
+  }
 
   // 
   var timeSlots = [];
@@ -48,11 +52,19 @@ var layOutDay = function(events) {
   var filteredTimeSlots = _.uniq(timeSlotsStringified);
   timeSlots = filteredTimeSlots.map(function(str) { return JSON.parse(str); });
 
-  // BUG: say we have these sets of conflicts:
-  // [0,1,2,3,4]
-  // [4,5]
-  // [5,6,7]
-  //We'll sign width 3 to event 5, when it should be getting width 5 from 4.
+  for(var i = 0; i < timeSlots.length; i++) {
+    var set = timeSlots[i];
+    for(var j = 0; j < set.length; j++) {
+      var index = set[j];
+      var conflicts = events[index]['conflicts'];
+      conflicts.push.apply(conflicts, set);
+      events[index]['conflicts'] = _.without(_.uniq(conflicts), index);
+    }
+  }
+
+  timeSlots.sort(function(arr1, arr2) {
+    return arr2.length - arr1.length;
+  });
 
   while(timeSlots.length) {
     // find the largest set of conflicting events
@@ -67,22 +79,8 @@ var layOutDay = function(events) {
       var width = events[index]['width'];
       // console.log("width: " + width);
       var cols = _.range(width);
-      if(width) {
-        var occupiedCols = _.pluck(conflictSet.map(function(i) { return events[i]; } ), 'col');
-        cols = _.difference(cols, occupiedCols);
-        setWidths = true;
-        for(var j = 0; j < conflictSet.length; j++) {
-          var index = conflictSet[j];
-          if(!events[index]['width']) {
-            events[index]['width'] = width;
-            events[index]['col'] = cols.splice(0,1)[0];
-            console.log("Setting event " + index + " to column " + events[index]['col'] + " in j loop.");
-          }
-        }
-        break;
-      }
     }
-    if(!setWidths) {
+    if(!width) {
       for (var i = 0; i < conflictSet.length; i++) {
         var index = conflictSet[i];
         events[index]['width'] = conflictSet.length;
@@ -99,15 +97,20 @@ var layOutDay = function(events) {
       var set = timeSlots[k];
       var intersection = _.intersection(set, parents);
       if(intersection.length) {
+        var width = events[parents[0]]['width'];
+        var cols = _.range(width);
+        var parentsEvents = set.map(function(i) { return events[i]; } );
+        var occupiedCols = _.pluck(parentsEvents, 'col');
+        cols = _.difference(cols, occupiedCols);
         for(var i = 0; i < set.length; i++) {
           var index = set[i];
-          var width = events[parents[0]]['width'];
-          var cols = _.range(width);
-          var occupiedCols = _.pluck(set.map(function(i) { return events[i]; } ), 'col');
-          cols = _.difference(cols, occupiedCols);
+          var conflicts = events[index]['conflicts'];
+          if(index == 7 || index == 6) {
+            console.log("STAP");
+          }
           if(!events[index]['width']) {
             events[index]['width'] = width;
-            events[index]['col'] = cols.splice(0,1)[0];
+            events[index]['col'] = cols.pop();
             parents.push(index);
             k = 0;
             console.log("Setting event " + index + " to column " + events[index]['col'] + " in k loop.");
@@ -136,9 +139,11 @@ var HTMLify = function(events) {
         'width': (600/evt['width']).toString() + 'px',
         'height': (evt['end'] - evt['start']).toString() + 'px',
       },
-      'html': '<span class="item">Sample Item</span><br><span class="loc">Sample Location</span>'
+      'html': i
+      // 'html': '<span class="item">Sample Item</span><br><span class="loc">Sample Location</span>'
     }).appendTo('#container');
   }
+  console.log("meh")
 }
 
 function getRandomInt(min, max) {
