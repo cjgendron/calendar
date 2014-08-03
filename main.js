@@ -30,7 +30,7 @@ var HTMLify = function(events) {
         'width': (600/evt['width']).toString() + 'px',
         'height': (evt['end'] - evt['start']).toString() + 'px',
       },
-      'html': '<span class="item">Sample Item</span><br><span class="loc">Sample Location</span>'
+      'html': '<div class="scroll"><span class="item">Sample Item</span><br><span class="loc">Sample Location</span></div>'
     }).appendTo('#container');
   }
 }
