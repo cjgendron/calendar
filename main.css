@@ -1,6 +1,10 @@
-body {
+/*@font-face {
   font-family: LucidaGrande;
-  
+  src: url('6216.tff');
+}*/
+
+body {
+  font-family: "Lucida Grande";
 }
 
 div {
@@ -36,12 +40,11 @@ td.time {
   margin-left: 40px;
   font-size: .8em;
   font-weight: bold;
-
 }
 
 tr:nth-child(even) .time, span {
   font-size: .5em;
-  color: #c0c0c0; /* guess */
+  color: #aaaaaa;
   font-weight: normal;
 }
 
@@ -54,10 +57,11 @@ tr:nth-child(even) .time > span {
   background-color: white;
   border: 1px solid #cfcfcf;
   border-left: 0;
-  position: absolute; /*this must be absolute, breaks otherwise*/
-  padding-left: 6px;
+  position: absolute; 
+  padding-left: 10px;
 }
 
+/* add blue border on the left of each event */
 .event:before{
   display: block;
   border: 4px solid #4d6fa7;
@@ -65,29 +69,30 @@ tr:nth-child(even) .time > span {
   border-bottom-width: 0;
   border-right-width: 0;
   content: '';
-  /*height: 100%;*/
   top: -1px;
   bottom: -1px;
   left: 0;
   position: absolute;
 }
 
+/* text overflow is handled similar to Google Calendar, except with vertical scrolling to view all of the text */
 .scroll {
   height: 100%;
-  overflow: auto;
-}
-
-.scroll > .span {
-  margin-left: 5px;
+  overflow-y: auto;
+  word-break: break-all;
+  margin: 0px 6px 0 0;
+  padding: 4px 0;
 }
 
 span.item {
   font-weight: bold;
-  font-size: 10px;
-  color: #4d6fa7;
+  font-size: 11px;
+  /* this color is slightly lighter than the usual Facebook blue -- the text in the specification image appears slightly lighter than the left border */
+  color: #5981c2;
 }
 
 span.loc {
-  color: #aaaaaa;
-  font-size: 8px;
+  line-height: 4px;
+  color: #797979;
+  font-size: 8.2px;
 }
